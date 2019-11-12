@@ -118,7 +118,6 @@ pair<map<Variable*,Domain>,bool> BTSolver::forwardChecking ( void )
 		}
 	}
 	return make_pair(modded, true);
-	//return make_pair(map<Variable*, Domain>(), false);
 }
 
 /**
@@ -174,9 +173,27 @@ Variable* BTSolver::getfirstUnassignedVariable ( void )
  *
  * Return: The unassigned variable with the smallest domain
  */
-Variable* BTSolver::getMRV ( void )
+Variable* BTSolver::getMRV(void)
 {
-    return nullptr;
+	Variable min* = nullptr;
+	int val = 2147483647; //INT_MAX
+	vector<Constraint*> RMC = network.getModifiedConstraints();
+	for (int i = 0; i < RMC.size(); ++i)
+	{
+		vector<Variable*> LV = RMC[i]->vars;
+		for (int j = 0; j < LV.size(); ++j)
+		{
+			Domain D = LV[j]->getDomain();
+			if (D.size() < val)
+			{
+				val = D.size();
+				min = LV[j];
+			}
+		}
+	}
+
+
+	return min;
 }
 
 /**
