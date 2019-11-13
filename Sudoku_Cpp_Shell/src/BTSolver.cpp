@@ -111,7 +111,7 @@ pair<map<Variable*,Domain>,bool> BTSolver::forwardChecking ( void )
 							return make_pair(modded, false);
 						trail->push(Neighbors[k]);
 						Neighbors[k]->removeValueFromDomain(assignedValue);
-						modded.insert(pair<Variable*, Domain>(Neighbors[k], D));
+						modded[Neighbors[k]] = D;
 					}
 				}
 			}
@@ -175,7 +175,7 @@ Variable* BTSolver::getfirstUnassignedVariable ( void )
  */
 Variable* BTSolver::getMRV(void)
 {
-	Variable min* = nullptr;
+	Variable *min = nullptr;
 	int val = 2147483647; //INT_MAX
 	vector<Constraint*> RMC = network.getModifiedConstraints();
 	for (int i = 0; i < RMC.size(); ++i)
@@ -183,16 +183,17 @@ Variable* BTSolver::getMRV(void)
 		vector<Variable*> LV = RMC[i]->vars;
 		for (int j = 0; j < LV.size(); ++j)
 		{
-			Domain D = LV[j]->getDomain();
-			if (D.size() < val)
+			if (!(LV[j]->isAssigned()))
 			{
-				val = D.size();
-				min = LV[j];
+				Domain D = LV[j]->getDomain();
+				if (D.size() < val)
+				{
+					val = D.size();
+					min = LV[j];
+				}
 			}
 		}
 	}
-
-
 	return min;
 }
 
@@ -244,6 +245,8 @@ vector<int> BTSolver::getValuesInOrder ( Variable* v )
  */
 vector<int> BTSolver::getValuesLCVOrder ( Variable* v )
 {
+	Domain mainD = v->getDomain();
+	vector<Variable*> Neighbors = network.getNeighborsOfVariable(v);
     return vector<int>();
 }
 
