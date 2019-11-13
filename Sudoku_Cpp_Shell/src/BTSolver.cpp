@@ -111,7 +111,7 @@ pair<map<Variable*,Domain>,bool> BTSolver::forwardChecking ( void )
 							return make_pair(modded, false);
 						trail->push(Neighbors[k]);
 						Neighbors[k]->removeValueFromDomain(assignedValue);
-						modded[Neighbors[k]] = D;
+						modded[Neighbors[k]] = Neighbors[k]->getDomain();
 					}
 				}
 			}
