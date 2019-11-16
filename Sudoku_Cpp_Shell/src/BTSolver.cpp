@@ -244,10 +244,34 @@ vector<int> BTSolver::getValuesInOrder ( Variable* v )
  *         The LCV is first and the MCV is last
  */
 vector<int> BTSolver::getValuesLCVOrder ( Variable* v )
-{
+{	
 	Domain mainD = v->getDomain();
 	vector<Variable*> Neighbors = network.getNeighborsOfVariable(v);
-    return vector<int>();
+
+	map<int, int> count; //hold domain value, count
+	for (auto it = mainD.begin(); it != mainD.end(); it++)
+		count.insert(make_pair(*it, 1));
+	
+	for (int i = 0; i < Neighbors.size();i++) {
+		Variable* var = Neighbors[i];
+		if (!(var->isAssigned())) {
+			Domain tempDomain = var->getDomain();
+			for (auto it = tempDomain.begin(); it != tempDomain.end(); it++) {
+				if (count.count(*it) > 0)
+					count[*it]++;
+			}
+		}
+	}
+	map<int, int> toReturn;
+	for (auto it = count.begin(); it != count.end(); it++) {
+		toReturn.insert(make_pair(it->second, it->first));
+	}
+
+	vector<int> ret;
+	for (auto it = toReturn.begin(); it != toReturn.end(); it++) {
+		ret.push_back(it->second);
+	
+	return ret;
 }
 
 /**
