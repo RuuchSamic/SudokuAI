@@ -248,30 +248,51 @@ vector<int> BTSolver::getValuesLCVOrder ( Variable* v )
 	Domain mainD = v->getDomain();
 	vector<Variable*> Neighbors = network.getNeighborsOfVariable(v);
 
-	map<int, int> count; //hold domain value, count
-	for (auto it = mainD.begin(); it != mainD.end(); it++)
-		count.insert(make_pair(*it, 1));
-	
-	for (int i = 0; i < Neighbors.size();i++) {
-		Variable* var = Neighbors[i];
-		if (!(var->isAssigned())) {
-			Domain tempDomain = var->getDomain();
-			for (auto it = tempDomain.begin(); it != tempDomain.end(); it++) {
-				if (count.count(*it) > 0)
-					count[*it]++;
+	map<int, int> counter;
+	vector<int> values = mainD.getValues();
+	for (int i = 0; i < values.size(); ++i)
+	{
+		counter[values[i]] = 0;
+	}
+
+	vector<int> tempVals;
+
+	for (int j = 0; j < Neighbors.size(); ++j)
+	{
+		Domain tempDomain = Neighbors[j]->getDomain();
+		tempVals = tempDomain.getValues();
+		for (int k = 0; k < values.size(); ++k)
+		{
+			for (int l = 0; l < tempVals.size(); ++l)
+			{
+				if (values[k] == tempVals[l])
+				{
+					++(counter[values[k]]);
+					break;
+				}
 			}
 		}
 	}
-	map<int, int> toReturn;
-	for (auto it = count.begin(); it != count.end(); it++) {
-		toReturn.insert(make_pair(it->second, it->first));
+
+	vector<int> sortedDomain;
+	int index;
+	int max = 2147483647;
+	for (int n = 0; n < values.size(); ++n)
+	{
+		for (map<int, int>::iterator m = counter.begin(); m != counter.end(); ++m)
+		{
+			if (max > m->second)
+			{
+				index = m->first;
+				max = m->second;
+			}
+		}
+		sortedDomain.push_back(index);
+		counter[index] = 2147483647;
+		max = 2147483647;
 	}
 
-	vector<int> ret;
-	for (auto it = toReturn.begin(); it != toReturn.end(); it++) {
-		ret.push_back(it->second);
-	
-	return ret;
+	return sortedDomain;
 }
 
 /**
