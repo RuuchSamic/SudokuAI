@@ -139,7 +139,60 @@ pair<map<Variable*,Domain>,bool> BTSolver::forwardChecking ( void )
  */
 pair<map<Variable*,int>,bool> BTSolver::norvigCheck ( void )
 {
-    return make_pair(map<Variable*, int>(), false);
+	pair<map<Variable*, Domain>, bool> result;
+	result = forwardChecking();
+
+	if (result.second == false)
+		return make_pair(map<Variable*, int>(), false);
+
+	map<Variable*, int> assigned;
+	map<int, int> domainCounter;
+	vector<int> values;
+	int target;
+	for (Variable* v : network.getVariables())
+	{
+		if (!(v->isAssigned()))
+		{
+			Domain D = v->getDomain();
+			values = D.getValues();
+			for (int i = 0; i < values.size(); ++i)
+			{
+				if (domainCounter.find(values[i]) == domainCounter.end())
+				{
+					domainCounter[values[i]] = 1;
+				}
+				else
+				{
+					++(domainCounter[values[i]]);
+				}
+			}
+		}
+	}
+	for (map<int, int>::iterator i = domainCounter.begin(); i != domainCounter.end(); ++i)
+	//for (auto i : domainCounter)
+	{
+		if (i->second == 1)
+		{
+			target = i->first;
+			for (Variable* v : network.getVariables())
+			{
+				if (!(v->isAssigned()))
+				{
+					Domain D = v->getDomain();
+					if (D.contains(target))
+					{
+						v->assignValue(target);
+						assigned[v] = target;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+
+    return make_pair(assigned, true);
+	//return make_pair(map<Variable*, int>(), false);
 }
 
 /**
