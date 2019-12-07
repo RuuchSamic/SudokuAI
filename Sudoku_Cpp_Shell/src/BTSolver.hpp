@@ -37,7 +37,7 @@ public:
 	std::vector<int> getTournVal       ( Variable* v );
 
 	// Engine Functions
-	void solve ( void );
+	int solve ( float time_left );
 
 	bool checkConsistency ( void );
 	Variable* selectNextVariable ( void );

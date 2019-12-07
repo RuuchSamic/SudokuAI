@@ -25,6 +25,7 @@ public:
 	Domain ( int value );
 	Domain ( ValueSet values );
 	Domain ( const Domain& d );
+    Domain ();
 
 	// Accessors
 	ValueSet getValues  ( void )      const;
