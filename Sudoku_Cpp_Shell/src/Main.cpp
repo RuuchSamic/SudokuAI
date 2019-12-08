@@ -17,44 +17,44 @@ using namespace std;
  * command line and properly starting the backtrack solver.
  */
 
-int main ( int argc, char *argv[] )
+int main(int argc, char* argv[])
 {
 	double elapsed_time = 0.0;
 	clock_t begin_clock;
 
 	// Set random seed
-	srand( time ( NULL ) );
+	srand(time(NULL));
 
 	// Important Variables
-	string file   = "";
+	string file = "";
 	string var_sh = "";
 	string val_sh = "";
-	string cc     = "";
+	string cc = "";
 
-	for ( int i = 1; i < argc; ++i )
+	for (int i = 1; i < argc; ++i)
 	{
 		string token = argv[i];
 
-		if ( token == "MRV" )
+		if (token == "MRV")
 			var_sh = "MinimumRemainingValue";
 
-		else if ( token == "MAD" )
+		else if (token == "MAD")
 			var_sh = "MRVwithTieBreaker";
 
-		else if ( token == "LCV" )
+		else if (token == "LCV")
 			val_sh = "LeastConstrainingValue";
 
-		else if ( token == "FC" )
+		else if (token == "FC")
 			cc = "forwardChecking";
 
-		else if ( token == "NOR" )
+		else if (token == "NOR")
 			cc = "norvigCheck";
 
-		else if ( token == "TOURN" )
+		else if (token == "TOURN")
 		{
-			 var_sh = "tournVar";
-			 val_sh = "tournVal";
-			 cc     = "tournCC";
+			var_sh = "tournVar";
+			val_sh = "tournVal";
+			cc = "tournCC";
 		}
 
 		else
@@ -63,21 +63,21 @@ int main ( int argc, char *argv[] )
 
 	Trail trail;
 
-	if ( file == "" )
+	if (file == "")
 	{
-		SudokuBoard board( 3, 3, 7 );
+		SudokuBoard board(3, 3, 7);
 		cout << board.toString() << endl;
 
-		BTSolver solver = BTSolver( board, &trail, val_sh, var_sh, cc );
+		BTSolver solver = BTSolver(board, &trail, val_sh, var_sh, cc);
 		if (cc == "forwardChecking" or cc == "norvigCheck" or cc == "tournCC")
-            solver.checkConsistency();
+			solver.checkConsistency();
 		solver.solve(600.0);
 
-		if ( solver.haveSolution() )
+		if (solver.haveSolution())
 		{
 			cout << solver.getSolution().toString() << endl;
 			cout << "Trail Pushes: " << trail.getPushCount() << endl;
-			cout << "Backtracks: "  << trail.getUndoCount() << endl;
+			cout << "Backtracks: " << trail.getUndoCount() << endl;
 		}
 		else
 		{
@@ -88,25 +88,28 @@ int main ( int argc, char *argv[] )
 	}
 
 	struct stat path_stat;
-	stat ( file.c_str(), &path_stat );
-	bool folder = S_ISDIR ( path_stat.st_mode );
+	stat(file.c_str(), &path_stat);
+	bool folder = S_ISDIR(path_stat.st_mode);
 
 	int numSolutions = 0;
-	if ( folder )
+	if (folder)
 	{
-		DIR *dir;
-		if ( ( dir = opendir ( file.c_str() ) ) == NULL )
+		DIR* dir;
+		if ((dir = opendir(file.c_str())) == NULL)
 		{
 			cout << "[ERROR] Failed to open directory." << endl;
 			return 0;
 		}
 
-		struct dirent *ent;
-
-		begin_clock = clock();
-		while ( ( ent = readdir (dir) ) != NULL )
+		struct dirent* ent;
+		vector<float> timer;
+		int numBoards = 0;
+		int timedOut;
+		int numTimedOut = 0;
+		while ((ent = readdir(dir)) != NULL)
 		{
-			if ( ent->d_name[0] == '.' )
+			begin_clock = clock();
+			if (ent->d_name[0] == '.')
 				continue;
 
 			cout << "Running board: " << ent->d_name << endl;
@@ -114,49 +117,65 @@ int main ( int argc, char *argv[] )
 			string individualFile = file + "/" + ent->d_name;
 
 
-			SudokuBoard board( individualFile );
+			SudokuBoard board(individualFile);
 
-			BTSolver solver = BTSolver( board, &trail, val_sh, var_sh, cc );
+			BTSolver solver = BTSolver(board, &trail, val_sh, var_sh, cc);
 			if (cc == "forwardChecking" or cc == "norvigCheck" or cc == "tournCC")
-	            solver.checkConsistency();
-			solver.solve(600.0);
+				solver.checkConsistency();
 
-			if ( solver.haveSolution() )
+			timedOut = solver.solve(600.0); //solve() returns -1 if it timed out. If so, we don't want to count that board
+			clock_t end_clock = clock();
+			if (timedOut != -1) {
+				timer.emplace_back((float)(end_clock - begin_clock) / CLOCKS_PER_SEC);
+			}
+			else
+				numTimedOut++;
+
+			numBoards++;
+
+			if (solver.haveSolution())
 				numSolutions++;
 
 			trail.clear();
 		}
-		
-		clock_t end_clock = clock();
 
+		cout << "\nNumber of Boards: " << numBoards << endl;
 		cout << "Solutions Found: " << numSolutions << endl;
 		cout << "Trail Pushes: " << trail.getPushCount() << endl;
-		cout << "Backtracks: "  << trail.getUndoCount() << endl;
-		closedir (dir);
+		cout << "Backtracks: " << trail.getUndoCount() << endl;
+		closedir(dir);
 
-		if (numSolutions == 0)
-			numSolutions = 1;
+		float totalTime = 0;
+		for (int i = 0; i < timer.size(); i++) {
+			totalTime += timer[i];
+		}
+		cout << "Total time: " << totalTime << " seconds." << endl;
 
-		float elapsed = (float)(end_clock - begin_clock) / CLOCKS_PER_SEC;
-		cout << "Elapsed time: " << elapsed<< " seconds." << endl;
-		cout << "Average time: " << elapsed / numSolutions << " seconds." << endl;
+		float average = totalTime / (numBoards-numTimedOut);
+		cout << "Average time: " << average << " seconds." << endl;
+
+		float stdDev = 0.0;
+		for (int i = 0; i < timer.size(); i++) {
+			stdDev += pow(timer[i] - average, 2);
+		}
+		cout << "Standard Deviation: " << sqrt(stdDev) << " seconds.\n" << endl;
 
 		return 0;
 	}
 
-	SudokuBoard board( file );
+	SudokuBoard board(file);
 	cout << board.toString() << endl;
 
-	BTSolver solver = BTSolver( board, &trail, val_sh, var_sh, cc );
+	BTSolver solver = BTSolver(board, &trail, val_sh, var_sh, cc);
 	if (cc == "forwardChecking" or cc == "norvigCheck" or cc == "tournCC")
-					solver.checkConsistency();
+		solver.checkConsistency();
 	solver.solve(600.0);
 
-	if ( solver.haveSolution() )
+	if (solver.haveSolution())
 	{
 		cout << solver.getSolution().toString() << endl;
 		cout << "Trail Pushes: " << trail.getPushCount() << endl;
-		cout << "Backtracks: "  << trail.getUndoCount() << endl;
+		cout << "Backtracks: " << trail.getUndoCount() << endl;
 	}
 	else
 	{
