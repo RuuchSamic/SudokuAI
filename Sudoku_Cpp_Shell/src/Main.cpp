@@ -19,6 +19,9 @@ using namespace std;
 
 int main ( int argc, char *argv[] )
 {
+	double elapsed_time = 0.0;
+	clock_t begin_clock = clock();
+
 	// Set random seed
 	srand( time ( NULL ) );
 
@@ -122,11 +125,16 @@ int main ( int argc, char *argv[] )
 
 			trail.clear();
 		}
+		clock_t end_clock = clock();
 
 		cout << "Solutions Found: " << numSolutions << endl;
 		cout << "Trail Pushes: " << trail.getPushCount() << endl;
 		cout << "Backtracks: "  << trail.getUndoCount() << endl;
 		closedir (dir);
+
+		float elapsed = (float)(end_clock - begin_clock) / CLOCKS_PER_SEC;
+		cout << "Elapsed time: " << elapsed<< " seconds." << endl;
+		cout << "Average time: " << elapsed / 10 << endl;
 
 		return 0;
 	}

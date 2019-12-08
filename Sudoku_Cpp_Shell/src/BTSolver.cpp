@@ -37,26 +37,26 @@ bool BTSolver::arcConsistency ( void )
 {
     vector<Variable*> toAssign;
     vector<Constraint*> RMC = network.getModifiedConstraints();
-    for (int i = 0; i < RMC.size(); ++i)
+    for (Constraint * c : RMC)
     {
-        vector<Variable*> LV = RMC[i]->vars;
-        for (int j = 0; j < LV.size(); ++j)
+        vector<Variable*> LV = c->vars;
+        for (Variable * v : LV)
         {
-            if(LV[j]->isAssigned())
+            if(v->isAssigned())
             {
-                vector<Variable*> Neighbors = network.getNeighborsOfVariable(LV[j]);
-                int assignedValue = LV[j]->getAssignment();
-                for (int k = 0; k < Neighbors.size(); ++k)
+                vector<Variable*> Neighbors = network.getNeighborsOfVariable(v);
+                int assignedValue = v->getAssignment();
+                for (Variable * n : Neighbors)
                 {
-                    Domain D = Neighbors[k]->getDomain();
+                    Domain D = n->getDomain();
                     if(D.contains(assignedValue))
                     {
                         if (D.size() == 1)
                             return false;
                         if (D.size() == 2)
-                            toAssign.push_back(Neighbors[k]);
-                        trail->push(Neighbors[k]);
-                        Neighbors[k]->removeValueFromDomain(assignedValue);
+                            toAssign.push_back(n);
+                        trail->push(n);
+                        n->removeValueFromDomain(assignedValue);
                     }
                 }
             }
@@ -64,12 +64,12 @@ bool BTSolver::arcConsistency ( void )
     }
     if (!toAssign.empty())
     {
-        for (int i = 0; i < toAssign.size(); ++i)
+        for (Variable * a : toAssign)
         {
-            Domain D = toAssign[i]->getDomain();
+            Domain D = a->getDomain();
             vector<int> assign = D.getValues();
-            trail->push(toAssign[i]);
-            toAssign[i]->assignValue(assign[0]);
+            trail->push(a);
+            a->assignValue(assign[0]);
         }
         return arcConsistency();
     }
@@ -93,25 +93,25 @@ pair<map<Variable*,Domain>,bool> BTSolver::forwardChecking ( void )
 {
 	map<Variable*, Domain> modded;
 	vector<Constraint*> RMC = network.getModifiedConstraints();
-	for (int i = 0; i < RMC.size(); ++i)
+	for (Constraint * c : RMC)
 	{
-		vector<Variable*> LV = RMC[i]->vars;
-		for (int j = 0; j < LV.size(); ++j)
+		vector<Variable*> LV = c->vars;
+		for (Variable * v : LV)
 		{
-			if (LV[j]->isAssigned())
+			if (v->isAssigned())
 			{
-				vector<Variable*> Neighbors = network.getNeighborsOfVariable(LV[j]);
-				int assignedValue = LV[j]->getAssignment();
-				for (int k = 0; k < Neighbors.size(); ++k)
+				vector<Variable*> Neighbors = network.getNeighborsOfVariable(v);
+				int assignedValue = v->getAssignment();
+				for (Variable* n : Neighbors)
 				{
-					Domain D = Neighbors[k]->getDomain();
+					Domain D = n->getDomain();
 					if (D.contains(assignedValue))
 					{
 						if (D.size() == 1)
 							return make_pair(modded, false);
-						trail->push(Neighbors[k]);
-						Neighbors[k]->removeValueFromDomain(assignedValue);
-						modded[Neighbors[k]] = Neighbors[k]->getDomain();
+						trail->push(n);
+						n->removeValueFromDomain(assignedValue);
+						modded[n] = n->getDomain();
 					}
 				}
 			}
@@ -231,18 +231,18 @@ Variable* BTSolver::getMRV(void)
 	Variable *min = nullptr;
 	int val = 2147483647; //INT_MAX
 	vector<Constraint*> RMC = network.getModifiedConstraints();
-	for (int i = 0; i < RMC.size(); ++i)
+	for (Constraint* c : RMC)
 	{
-		vector<Variable*> LV = RMC[i]->vars;
-		for (int j = 0; j < LV.size(); ++j)
+		vector<Variable*> LV = c->vars;
+		for (Variable* v : LV)
 		{
-			if (!(LV[j]->isAssigned()))
+			if (!(v->isAssigned()))
 			{
-				Domain D = LV[j]->getDomain();
+				Domain D = v->getDomain();
 				if (D.size() < val)
 				{
 					val = D.size();
-					min = LV[j];
+					min = v;
 				}
 			}
 		}
@@ -266,7 +266,7 @@ vector<Variable*> BTSolver::MRVwithTieBreaker ( void )
 	Variable *min = nullptr;
 	int countNeighbors = 0;
 	int val = 2147483647; //INT_MAX
-	int minNeighbors = -1;
+	int maxNeighbors = -1;
 	for (Variable* v : network.getVariables())
 	{
 		if (!(v->isAssigned()))
@@ -297,13 +297,13 @@ vector<Variable*> BTSolver::MRVwithTieBreaker ( void )
 				++countNeighbors;
 		}
 		degreeCount[v] = countNeighbors;
-		if(countNeighbors > minNeighbors)
-			minNeighbors = countNeighbors;
+		if(countNeighbors > maxNeighbors)
+			maxNeighbors = countNeighbors;
 	}
 	
 	for (map<Variable*, int>::iterator m = degreeCount.begin(); m != degreeCount.end(); ++m)
 	{
-		if(m->second == minNeighbors)
+		if(m->second == maxNeighbors)
 			answer.push_back(m->first);
 	}
 	
