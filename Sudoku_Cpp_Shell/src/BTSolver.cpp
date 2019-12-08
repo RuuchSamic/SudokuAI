@@ -261,7 +261,53 @@ Variable* BTSolver::getMRV(void)
  */
 vector<Variable*> BTSolver::MRVwithTieBreaker ( void )
 {
-    return vector<Variable*>();
+	vector<Variable*> result;
+	vector<Variable*> answer;
+	Variable *min = nullptr;
+	int countNeighbors = 0;
+	int val = 2147483647; //INT_MAX
+	int minNeighbors = -1;
+	for (Variable* v : network.getVariables())
+	{
+		if (!(v->isAssigned()))
+		{
+			Domain D = v->getDomain();
+			if (D.size() < val)
+			{
+				val = D.size();
+				if(result.size() != 0)
+				{
+					result.clear();
+				}
+				result.push_back(v);
+			}
+			else if (D.size() == val)
+				result.push_back(v);
+		}
+	}
+	
+	map<Variable*, int> degreeCount;
+	for (Variable* v : result)
+	{
+		vector<Variable*> neighbors = network.getNeighborsOfVariable(v);
+		countNeighbors = 0;
+		for(Variable* w : neighbors)
+		{
+			if(!(w->isAssigned()))
+				++countNeighbors;
+		}
+		degreeCount[v] = countNeighbors;
+		if(countNeighbors > minNeighbors)
+			minNeighbors = countNeighbors;
+	}
+	
+	for (map<Variable*, int>::iterator m = degreeCount.begin(); m != degreeCount.end(); ++m)
+	{
+		if(m->second == minNeighbors)
+			answer.push_back(m->first);
+	}
+	
+	return answer;
 }
 
 /**
