@@ -20,7 +20,7 @@ using namespace std;
 int main ( int argc, char *argv[] )
 {
 	double elapsed_time = 0.0;
-	clock_t begin_clock = clock();
+	clock_t begin_clock;
 
 	// Set random seed
 	srand( time ( NULL ) );
@@ -91,6 +91,7 @@ int main ( int argc, char *argv[] )
 	stat ( file.c_str(), &path_stat );
 	bool folder = S_ISDIR ( path_stat.st_mode );
 
+	int numSolutions = 0;
 	if ( folder )
 	{
 		DIR *dir;
@@ -102,7 +103,7 @@ int main ( int argc, char *argv[] )
 
 		struct dirent *ent;
 
-		int numSolutions = 0;
+		begin_clock = clock();
 		while ( ( ent = readdir (dir) ) != NULL )
 		{
 			if ( ent->d_name[0] == '.' )
@@ -125,6 +126,7 @@ int main ( int argc, char *argv[] )
 
 			trail.clear();
 		}
+		
 		clock_t end_clock = clock();
 
 		cout << "Solutions Found: " << numSolutions << endl;
@@ -132,9 +134,12 @@ int main ( int argc, char *argv[] )
 		cout << "Backtracks: "  << trail.getUndoCount() << endl;
 		closedir (dir);
 
+		if (numSolutions == 0)
+			numSolutions = 1;
+
 		float elapsed = (float)(end_clock - begin_clock) / CLOCKS_PER_SEC;
 		cout << "Elapsed time: " << elapsed<< " seconds." << endl;
-		cout << "Average time: " << elapsed / 10 << endl;
+		cout << "Average time: " << elapsed / numSolutions << " seconds." << endl;
 
 		return 0;
 	}
