@@ -169,7 +169,6 @@ pair<map<Variable*,int>,bool> BTSolver::norvigCheck ( void )
 		}
 	}
 	for (map<int, int>::iterator i = domainCounter.begin(); i != domainCounter.end(); ++i)
-	//for (auto i : domainCounter)
 	{
 		if (i->second == 1)
 		{
@@ -323,13 +322,14 @@ vector<Variable*> BTSolver::MRVwithTieBreaker ( void )
 		if(countNeighbors > maxNeighbors)
 			maxNeighbors = countNeighbors;
 	}
-	
-	for (int i = 0; i < result.size(); ++i)
+	int i = 0;
+	for (Variable* v : result)
 	{
-		if(neighborCount[i] == maxNeighbors)
+		if(neighborCount.at(i) == maxNeighbors)
 		{
-			answer.push_back(result[i]);
+			answer.push_back(v);
 		}
+		++i;
 	}
 	
 	
