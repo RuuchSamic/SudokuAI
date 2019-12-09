@@ -127,9 +127,13 @@ int main(int argc, char* argv[])
 			clock_t end_clock = clock();
 			if (timedOut != -1) {
 				timer.emplace_back((float)(end_clock - begin_clock) / CLOCKS_PER_SEC);
+				cout << "Time: " << ((float)(end_clock - begin_clock) / CLOCKS_PER_SEC) << endl;
 			}
-			else
+			else {
 				numTimedOut++;
+				cout << ent->d_name << " Timed out." << endl;
+			}
+
 
 			numBoards++;
 
@@ -153,12 +157,13 @@ int main(int argc, char* argv[])
 
 		float average = totalTime / (numBoards-numTimedOut);
 		cout << "Average time: " << average << " seconds." << endl;
+		//cout << "Timer size: " << timer.size() << endl;
 
 		float stdDev = 0.0;
 		for (int i = 0; i < timer.size(); i++) {
 			stdDev += pow(timer[i] - average, 2);
 		}
-		cout << "Standard Deviation: " << sqrt(stdDev) << " seconds.\n" << endl;
+		cout << "Standard Deviation: " << sqrt(stdDev/timer.size()) << " seconds.\n" << endl;
 
 		return 0;
 	}
