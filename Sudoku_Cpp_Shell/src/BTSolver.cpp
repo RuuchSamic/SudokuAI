@@ -230,20 +230,16 @@ Variable* BTSolver::getMRV(void)
 {
 	Variable *min = nullptr;
 	int val = 2147483647; //INT_MAX
-	vector<Constraint*> RMC = network.getModifiedConstraints();
-	for (Constraint* c : RMC)
+
+	for (Variable* v : network.getVariables())
 	{
-		vector<Variable*> LV = c->vars;
-		for (Variable* v : LV)
+		if (!(v->isAssigned()))
 		{
-			if (!(v->isAssigned()))
+			Domain D = v->getDomain();
+			if (D.size() < val)
 			{
-				Domain D = v->getDomain();
-				if (D.size() < val)
-				{
-					val = D.size();
-					min = v;
-				}
+				val = D.size();
+				min = v;
 			}
 		}
 	}
@@ -263,10 +259,12 @@ vector<Variable*> BTSolver::MRVwithTieBreaker ( void )
 {
 	vector<Variable*> result;
 	vector<Variable*> answer;
-	Variable *min = nullptr;
+	vector<int> neighborCount;
 	int countNeighbors = 0;
 	int val = 2147483647; //INT_MAX
+	//map<Variable*, int> degreeCount;
 	int maxNeighbors = -1;
+
 	for (Variable* v : network.getVariables())
 	{
 		if (!(v->isAssigned()))
@@ -275,18 +273,22 @@ vector<Variable*> BTSolver::MRVwithTieBreaker ( void )
 			if (D.size() < val)
 			{
 				val = D.size();
-				if(result.size() != 0)
-				{
-					result.clear();
-				}
-				result.push_back(v);
 			}
-			else if (D.size() == val)
-				result.push_back(v);
 		}
 	}
 	
-	map<Variable*, int> degreeCount;
+	for (Variable* v : network.getVariables())
+	{
+		if(!(v->isAssigned()))
+		{
+			Domain D = v->getDomain();
+			if( D.size() == val)
+			{
+				result.push_back(v);
+			}
+		}
+	}
+/**
 	for (Variable* v : result)
 	{
 		vector<Variable*> neighbors = network.getNeighborsOfVariable(v);
@@ -296,16 +298,41 @@ vector<Variable*> BTSolver::MRVwithTieBreaker ( void )
 			if(!(w->isAssigned()))
 				++countNeighbors;
 		}
-		degreeCount[v] = countNeighbors;
+		//degreeCount[v] = countNeighbors;
+		//degreeCount.insert ( std::pair<Variable*,int>(v,countNeighbors) )
 		if(countNeighbors > maxNeighbors)
 			maxNeighbors = countNeighbors;
 	}
-	
+
 	for (map<Variable*, int>::iterator m = degreeCount.begin(); m != degreeCount.end(); ++m)
 	{
 		if(m->second == maxNeighbors)
 			answer.push_back(m->first);
 	}
+**/
+	for (Variable* v : result)
+	{
+		vector<Variable*> neighbors = network.getNeighborsOfVariable(v);
+		countNeighbors = 0;
+		for(Variable* w : neighbors)
+		{
+			if(!(w->isAssigned()))
+				++countNeighbors;
+		}
+		neighborCount.push_back(countNeighbors);
+		if(countNeighbors > maxNeighbors)
+			maxNeighbors = countNeighbors;
+	}
+	
+	for (int i = 0; i < result.size(); ++i)
+	{
+		if(neighborCount[i] == maxNeighbors)
+		{
+			answer.push_back(result[i]);
+		}
+	}
+	
+	
 	
 	return answer;
 }
